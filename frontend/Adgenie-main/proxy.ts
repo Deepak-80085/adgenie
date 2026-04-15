@@ -5,8 +5,8 @@ export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-anon-key',
     {
       cookies: {
         getAll() {
@@ -28,7 +28,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Redirect unauthenticated users away from protected routes
-  const protectedRoutes = ['/create', '/dashboard', '/profile', '/video']
+  const protectedRoutes = ['/dashboard', '/profile']
   const isProtected = protectedRoutes.some(r => pathname.startsWith(r))
 
   if (isProtected && !user) {
