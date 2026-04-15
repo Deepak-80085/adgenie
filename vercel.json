@@ -1,0 +1,26 @@
+{
+  "builds": [
+    {
+      "src": "frontend/Adgenie-main/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "main.py"
+    },
+    {
+      "src": "/health",
+      "dest": "main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/Adgenie-main/$1"
+    }
+  ]
+}
