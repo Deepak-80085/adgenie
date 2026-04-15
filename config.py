@@ -45,7 +45,7 @@ class Settings:
     app_host: str
     app_port: int
     debug: bool
-    cors_origins: list[str]
+    cors_origins: tuple[str, ...]
     azure_openai_responses_url: str
     azure_openai_api_key: str
     openai_model: str
@@ -71,7 +71,7 @@ def get_settings() -> Settings:
     _load_dotenv(BASE_DIR / ".env")
 
     _raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
-    cors_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+    cors_origins = tuple(o.strip() for o in _raw_origins.split(",") if o.strip())
 
     settings = Settings(
         app_name=os.getenv("APP_NAME", "Seedance Pipeline"),
