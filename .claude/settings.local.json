@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:fal.ai)",
+      "WebFetch(domain:docs.fal.ai)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:api.fal.ai)",
+      "WebFetch(domain:fal-ai.github.io)",
+      "WebFetch(domain:queue.fal.run)",
+      "Bash(python *)",
+      "Bash(grep -E \"\\\\.\\(css|json\\)$\")",
+      "Bash(grep -E \"middleware|\\\\.ts$|\\\\.js$\")",
+      "Bash(supabase --version)",
+      "Bash(winget install *)",
+      "Bash(scoop install *)",
+      "Bash(powershell *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)"
+    ]
+  }
+}

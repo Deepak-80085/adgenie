@@ -1,0 +1,10 @@
+{
+  "name": "seedance",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names \"API,UI\" --prefix-colors \"cyan,magenta\" \"uvicorn main:app --reload --port 8000\" \"npm run dev --prefix frontend/Adgenie-main\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
