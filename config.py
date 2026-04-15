@@ -100,6 +100,15 @@ def get_settings() -> Settings:
         supabase_publishable_key=os.getenv("SUPABASE_PUBLISHABLE_KEY", ""),
         database_url=os.getenv("DATABASE_URL", ""),
     )
-    settings.upload_dir.mkdir(parents=True, exist_ok=True)
-    settings.download_dir.mkdir(parents=True, exist_ok=True)
+    def _safe_mkdir(path: Path) -> Path:
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            return path
+        except OSError:
+            fallback = Path("/tmp") / path.name
+            fallback.mkdir(parents=True, exist_ok=True)
+            return fallback
+
+    object.__setattr__(settings, "upload_dir", _safe_mkdir(settings.upload_dir))
+    object.__setattr__(settings, "download_dir", _safe_mkdir(settings.download_dir))
     return settings
