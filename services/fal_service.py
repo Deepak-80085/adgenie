@@ -26,8 +26,8 @@ except ImportError:  # pragma: no cover - dependency is only needed in live mode
 
 
 FAL_ENDPOINTS = {
-    "text-to-video": "bytedance/seedance-2.0/text-to-video",
-    "image-to-video": "bytedance/seedance-2.0/image-to-video",
+    "text-to-video": "bytedance/seedance-2.0/fast/text-to-video",
+    "image-to-video": "bytedance/seedance-2.0/fast/image-to-video",
 }
 
 
@@ -38,17 +38,10 @@ class FalService:
 
     @staticmethod
     def _poll_base_url(endpoint: str, request_id: str) -> str:
-        """Build the correct fal.ai queue base URL for status/result polling.
-
-        fal_client uses owner/alias only (drops the path component) for polling.
-        e.g. 'bytedance/seedance-2.0/text-to-video' → queue.fal.run/bytedance/seedance-2.0/requests/{id}
-        """
-        if _FalAppId is not None:
-            app_id = _FalAppId.from_endpoint_id(endpoint)
-            return f"https://queue.fal.run/{app_id.owner}/{app_id.alias}/requests/{request_id}"
-        # Fallback: drop everything after second slash segment
+        # FAL strips sub-paths from the returned response_url, so we mirror that:
+        # owner/alias only. FAL's queue recognises requests at this parent path.
         parts = endpoint.split("/")
-        base = "/".join(parts[:2])
+        base = "/".join(parts[:2]) if len(parts) >= 2 else endpoint
         return f"https://queue.fal.run/{base}/requests/{request_id}"
 
     def _resolve_endpoint(self, mode: str) -> str:
@@ -142,8 +135,7 @@ class FalService:
                 raise HTTPException(status_code=502, detail=f"fal.ai submission failed: {exc}") from exc
 
         body = response.json()
-        logger.info("fal.ai SUBMIT ← request_id=%s  status_url=%s  response_url=%s",
-                    body.get("request_id"), body.get("status_url"), body.get("response_url"))
+        logger.info("fal.ai SUBMIT ← body=%s", body)
         return (
             body["request_id"],
             endpoint,
@@ -213,5 +205,5 @@ class FalService:
                 logger.error("fal.ai RESULT network error: %s", exc)
                 raise HTTPException(status_code=502, detail=f"fal.ai result request failed: {exc}") from exc
         data = response.json()
-        logger.info("fal.ai RESULT ← video_url=%s  seed=%s", data.get("video", {}).get("url"), data.get("seed"))
+        logger.info("fal.ai RESULT ← %s", data)
         return data

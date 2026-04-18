@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Log in — AdGenie{% endblock %}
+
+{% block content %}
+<div class="page-fade" style="min-height:calc(100vh - 4rem);display:flex;align-items:center;justify-content:center;padding:2rem 1rem;">
+  <div x-data="loginPage()" style="width:100%;max-width:20rem;">
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:2.5rem;">
+      <a href="/" style="font-family:'Instrument Serif',serif;font-size:1.875rem;letter-spacing:-0.02em;color:var(--foreground);text-decoration:none;">AdGenie</a>
+      <p style="margin-top:0.375rem;font-size:0.875rem;color:var(--muted-foreground);">Create product ads in sixty seconds</p>
+    </div>
+
+    <!-- Mode heading -->
+    <h2 style="font-family:'Instrument Serif',serif;font-size:1.375rem;color:var(--foreground);margin-bottom:1.5rem;letter-spacing:-0.01em;" x-text="tab === 'signin' ? 'Welcome back' : 'Create your account'"></h2>
+
+    <form @submit.prevent="submit()" style="display:flex;flex-direction:column;gap:1rem;">
+
+      <div x-show="tab === 'signup'">
+        <label>Full name</label>
+        <input type="text" x-model="fullName" placeholder="Your name" class="input" />
+      </div>
+
+      <div>
+        <label>Email</label>
+        <input type="email" x-model="email" placeholder="you@example.com" required class="input" autocomplete="email" />
+      </div>
+
+      <div>
+        <label>Password</label>
+        <input type="password" x-model="password" placeholder="••••••••" required minlength="6" class="input" />
+      </div>
+
+      <template x-if="error">
+        <p style="font-size:0.8125rem;color:#dc2626;border:1px solid #fecaca;background:#fef2f2;padding:0.625rem 0.875rem;" x-text="error"></p>
+      </template>
+
+      <template x-if="message">
+        <p style="font-size:0.8125rem;color:#15803d;border:1px solid #bbf7d0;background:#f0fdf4;padding:0.625rem 0.875rem;" x-text="message"></p>
+      </template>
+
+      <button
+        type="submit"
+        :disabled="loading"
+        class="btn btn-primary"
+        style="width:100%;padding:0.75rem;font-size:0.9375rem;margin-top:0.25rem;"
+        x-text="loading ? 'Please wait…' : (tab === 'signin' ? 'Log in' : 'Create account')"
+      ></button>
+
+    </form>
+
+    <!-- Switch mode -->
+    <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);text-align:center;">
+      <template x-if="tab === 'signin'">
+        <p style="font-size:0.875rem;color:var(--muted-foreground);">
+          New to AdGenie?
+          <button @click="tab='signup';error=null" style="background:none;border:none;cursor:pointer;color:var(--foreground);font-weight:600;font-size:inherit;padding:0 0 0 0.25rem;text-decoration:none;">
+            Create a free account →
+          </button>
+        </p>
+      </template>
+      <template x-if="tab === 'signup'">
+        <p style="font-size:0.875rem;color:var(--muted-foreground);">
+          Already have an account?
+          <button @click="tab='signin';error=null" style="background:none;border:none;cursor:pointer;color:var(--foreground);font-weight:600;font-size:inherit;padding:0 0 0 0.25rem;text-decoration:none;">
+            Log in →
+          </button>
+        </p>
+      </template>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

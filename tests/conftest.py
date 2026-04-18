@@ -59,6 +59,7 @@ def mock_settings(tmp_path, skill_file) -> Settings:
         app_host="127.0.0.1",
         app_port=8000,
         debug=False,
+        cors_origins=("http://localhost:3000",),
         azure_openai_responses_url=(
             "https://test.cognitiveservices.azure.com/openai/responses"
             "?api-version=2025-04-01-preview"

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Library — AdGenie{% endblock %}
+
+{% block content %}
+<div class="page-fade" x-data="dashboardPage()" x-init="init()">
+  <div style="max-width:1200px;margin:0 auto;padding:3rem 1.25rem;">
+
+    <!-- Header -->
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:3rem;">
+      <div>
+        <p data-meta>Archive</p>
+        <h1 style="font-size:clamp(2rem,5vw,3rem);letter-spacing:-0.02em;margin-top:0.25rem;">Your generated videos</h1>
+      </div>
+      <a href="/create" class="btn btn-primary">Create ad</a>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" style="padding:4rem 0;text-align:center;">
+      <p data-meta>Loading archive…</p>
+    </div>
+
+    <!-- Empty state -->
+    <div x-show="!loading && ordered.length === 0" class="empty-state">
+      <h3>No videos yet</h3>
+      <p>Start a new generation to build your archive.</p>
+      <a href="/create" class="btn btn-primary btn-sm">Create ad</a>
+    </div>
+
+    <!-- Job grid -->
+    <div x-show="!loading && ordered.length > 0" style="display:grid;gap:2rem;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));">
+      <template x-for="job in ordered" :key="job.job_id">
+        <div class="card" style="overflow:hidden;">
+
+          <!-- Video or placeholder -->
+          <div style="position:relative;aspect-ratio:16/9;background:var(--surface);overflow:hidden;">
+            <template x-if="job.status === 'COMPLETED' && job.video_url">
+              <video
+                :src="job.video_url"
+                style="width:100%;height:100%;object-fit:cover;"
+                controls
+                playsinline
+                preload="metadata"
+              ></video>
+            </template>
+            <template x-if="!(job.status === 'COMPLETED' && job.video_url)">
+              <div style="display:flex;height:100%;align-items:center;justify-content:center;">
+                <span :class="['badge', statusCss(job.status)]" x-text="statusLabel(job.status)"></span>
+              </div>
+            </template>
+          </div>
+
+          <div style="padding:1rem;display:flex;flex-direction:column;gap:0.75rem;">
+            <!-- Title + badge -->
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;">
+              <p style="font-family:'Instrument Serif',serif;font-size:1.0625rem;line-height:1.25;flex:1;" x-text="shortPrompt(job.user_prompt)"></p>
+              <span :class="['badge', statusCss(job.status)]" x-text="statusLabel(job.status)"></span>
+            </div>
+
+            <!-- Meta -->
+            <p data-meta x-text="`${job.resolution} · ${job.aspect_ratio} · ${formatDate(job.created_at)}`"></p>
+
+            <!-- Error -->
+            <template x-if="job.status === 'FAILED' && job.error">
+              <p style="font-size:0.75rem;color:#dc2626;border:1px solid #fecaca;background:#fef2f2;padding:0.375rem 0.5rem;" x-text="job.error"></p>
+            </template>
+
+            <!-- Actions -->
+            <template x-if="job.status === 'COMPLETED'">
+              <div style="display:flex;gap:0.5rem;">
+                <a
+                  :href="downloadUrl(job.job_id)"
+                  :download="`${job.job_id}.mp4`"
+                  class="btn btn-primary btn-sm"
+                >Download</a>
+              </div>
+            </template>
+
+            <template x-if="job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS'">
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <div class="gen-spinner" style="width:1rem;height:1rem;margin:0;border-width:1.5px;"></div>
+                <p style="font-size:0.75rem;color:var(--muted-foreground);">Generating…</p>
+              </div>
+            </template>
+          </div>
+
+        </div>
+      </template>
+    </div>
+
+  </div>
+</div>
+
+<footer>© 2026 AdGenie</footer>
+{% endblock %}

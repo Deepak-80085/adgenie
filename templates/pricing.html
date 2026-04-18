@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Pricing — AdGenie{% endblock %}
+
+{% block content %}
+<div class="page-fade">
+  <div style="max-width:1200px;margin:0 auto;padding:3rem 1.25rem;">
+
+    <!-- Header -->
+    <div style="max-width:48rem;margin-bottom:4rem;">
+      <p data-meta>Pricing</p>
+      <h1 style="font-size:clamp(2rem,5vw,3rem);letter-spacing:-0.02em;margin:0.5rem 0 1rem;">Pick the plan that matches your pace</h1>
+      <p style="color:var(--muted-foreground);font-size:1rem;">One consistent ad format, with flexible plans for different publishing needs.</p>
+    </div>
+
+    <!-- Plans -->
+    <div style="border-top:1px solid var(--border);padding-top:2.5rem;display:grid;gap:0;grid-template-columns:1fr;" class="md:grid-cols-3">
+
+      <div style="padding:1.5rem 0;border-top:1px solid var(--border);" class="md:border-l md:border-t-0 md:pl-6" id="plan-starter" style="border-top:none !important;">
+        <!-- Using inline padding to avoid first-child issues -->
+      </div>
+
+      <!-- Starter -->
+      <div style="padding:1.5rem 1.5rem 2rem 0;border-top:1px solid var(--border);">
+        <p data-meta style="margin-bottom:1rem;">Starter</p>
+        <p style="font-family:'Instrument Serif',serif;font-size:3rem;line-height:1;margin-bottom:0.5rem;">$19<span style="font-size:1rem;font-family:'Inter',sans-serif;color:var(--muted-foreground);">/mo</span></p>
+        <p style="font-size:0.875rem;color:var(--muted-foreground);margin-bottom:1.25rem;">For first campaigns</p>
+        <button class="btn btn-secondary btn-sm">Choose plan</button>
+      </div>
+
+      <!-- Growth -->
+      <div style="padding:1.5rem;border:1px solid var(--foreground);margin:0 -1px;background:var(--surface);">
+        <p data-meta style="margin-bottom:1rem;">Growth</p>
+        <p style="font-family:'Instrument Serif',serif;font-size:3rem;line-height:1;margin-bottom:0.5rem;">$79<span style="font-size:1rem;font-family:'Inter',sans-serif;color:var(--muted-foreground);">/mo</span></p>
+        <p style="font-size:0.875rem;color:var(--muted-foreground);margin-bottom:1.25rem;">For weekly publishing</p>
+        <button class="btn btn-primary btn-sm">Choose plan</button>
+      </div>
+
+      <!-- Pro -->
+      <div style="padding:1.5rem 0 2rem 1.5rem;border-top:1px solid var(--border);">
+        <p data-meta style="margin-bottom:1rem;">Pro</p>
+        <p style="font-family:'Instrument Serif',serif;font-size:3rem;line-height:1;margin-bottom:0.5rem;">$249<span style="font-size:1rem;font-family:'Inter',sans-serif;color:var(--muted-foreground);">/mo</span></p>
+        <p style="font-size:0.875rem;color:var(--muted-foreground);margin-bottom:1.25rem;">For high-volume teams</p>
+        <button class="btn btn-secondary btn-sm">Choose plan</button>
+      </div>
+
+    </div>
+
+    <!-- FAQ -->
+    <div style="margin-top:4rem;border-top:1px solid var(--border);padding-top:2.5rem;">
+      <p data-meta style="margin-bottom:1.5rem;">FAQ</p>
+      <div style="display:flex;flex-direction:column;gap:1.5rem;max-width:42rem;">
+        <div>
+          <p style="font-weight:500;margin-bottom:0.375rem;">What ad format is included?</p>
+          <p style="color:var(--muted-foreground);font-size:0.9375rem;">All plans use one standard ad generation format.</p>
+        </div>
+        <div>
+          <p style="font-weight:500;margin-bottom:0.375rem;">Can I regenerate a video?</p>
+          <p style="color:var(--muted-foreground);font-size:0.9375rem;">Yes. You can regenerate and refine your output anytime.</p>
+        </div>
+        <div>
+          <p style="font-weight:500;margin-bottom:0.375rem;">Can I upgrade later?</p>
+          <p style="color:var(--muted-foreground);font-size:0.9375rem;">Yes. You can move to a higher plan when your volume increases.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>© 2026 AdGenie</footer>
+{% endblock %}

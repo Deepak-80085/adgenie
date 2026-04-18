@@ -1,0 +1,511 @@
+{% extends "base.html" %}
+{% block title %}Create Ad — AdGenie{% endblock %}
+
+{% block content %}
+<div class="page-fade" x-data="createWizard()">
+  <div class="create-layout">
+
+    <!-- ══════════════ LEFT SIDEBAR ══════════════ -->
+    <aside class="create-sidebar">
+      <a href="/" class="create-back">← Home</a>
+
+      <div style="margin-bottom:2.5rem;">
+        <p class="create-sidebar-label">New ad</p>
+        <h2 class="create-sidebar-title">Video Ad<br>Creator</h2>
+      </div>
+
+      <!-- Step indicators -->
+      <div style="flex:1;">
+        <template x-for="(label, idx) in wizardSteps" :key="idx">
+          <div style="display:flex;gap:0.875rem;">
+            <div style="display:flex;flex-direction:column;align-items:center;">
+              <div class="create-step-dot"
+                :class="stepperStep > idx + 1 ? 'create-step-done' : (stepperStep === idx + 1 ? 'create-step-active' : '')">
+                <span x-text="stepperStep > idx + 1 ? '✓' : (idx + 1)"></span>
+              </div>
+              <div x-show="idx < wizardSteps.length - 1" class="create-step-line"></div>
+            </div>
+            <div class="create-step-label-wrap">
+              <p class="create-step-label"
+                :class="stepperStep === idx + 1 ? 'create-step-label-active' : (stepperStep > idx + 1 ? 'create-step-label-done' : '')"
+                x-text="label"></p>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Contextual tip -->
+      <div class="create-tip-box">
+        <p class="create-sidebar-label" style="margin-bottom:0.5rem;">Pro tip</p>
+        <p class="create-tip-text" x-text="
+          step === 1 && !chatStarted ? 'Upload a clean product shot on a neutral background — the AI reads product details from the image.' :
+          (step === 1 && chatStarted ? 'Chat naturally. Ask the AI to change the setting, mood, or story angle until the concept feels right.' :
+          (step === 2 ? 'Match the vibe to your platform: Energetic for TikTok, Luxury for Instagram, Minimalist for LinkedIn.' :
+          'Post within 24 hours of creation for maximum algorithmic reach.'))
+        "></p>
+      </div>
+    </aside>
+
+    <!-- ══════════════ MAIN AREA ══════════════ -->
+    <div class="create-main">
+
+      <!-- ── GENERATION OVERLAY ── -->
+      <div x-show="generating" class="create-gen-overlay">
+        <div style="text-align:center;max-width:28rem;width:100%;">
+          <div class="create-gen-ring">
+            <div class="create-gen-ring-outer"></div>
+            <div class="create-gen-ring-inner"></div>
+          </div>
+          <p style="font-family:'Instrument Serif',serif;font-size:1.625rem;color:var(--foreground);margin-bottom:0.375rem;" x-text="generationSteps[generationStepIdx]"></p>
+          <p style="font-size:0.875rem;color:var(--muted-foreground);margin-bottom:2.5rem;">Usually 1–3 minutes. Keep this tab open.</p>
+          <div style="text-align:left;border:1px solid var(--border);background:var(--card);padding:1.25rem 1.5rem;">
+            <template x-for="(s, idx) in generationSteps" :key="idx">
+              <div :class="['gen-step', idx < generationStepIdx ? 'done' : (idx === generationStepIdx ? 'active' : '')]" style="margin-bottom:0.5rem;">
+                <span class="gen-step-dot"></span>
+                <span x-text="s"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ STEP 1: Product + AI Chat ══════════ -->
+      <div x-show="step === 1 && !generating" style="display:flex;flex-direction:column;height:100%;">
+
+        <!-- Step header -->
+        <div class="create-step-header">
+          <p class="create-step-meta">Step 1 of 2</p>
+          <h1 class="create-step-title" x-text="chatStarted ? 'Refine your concept' : 'Your product'"></h1>
+          <p class="create-step-desc" x-text="chatStarted ? 'Chat with your AI creative director to shape the perfect story.' : 'Upload your product image and describe what you sell.'"></p>
+        </div>
+
+        <!-- Two-panel: product form (left) + chat (right) -->
+        <div class="step1-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;flex:1;min-height:0;">
+
+          <!-- ─── LEFT: product inputs ─── -->
+          <div style="display:flex;flex-direction:column;gap:1.25rem;padding-right:0.5rem;">
+
+            <!-- Upload zone -->
+            <div>
+              <label style="margin-bottom:0.5rem;">Product image <span class="required">*</span></label>
+              <div class="upload-zone"
+                :class="{ 'drag-over': dragOver }"
+                @dragover.prevent="dragOver = true"
+                @dragleave.prevent="dragOver = false"
+                @drop.prevent="onDrop($event)"
+                @click="$refs.fileInput.click()"
+                style="min-height:140px;display:flex;align-items:center;justify-content:center;">
+                <template x-if="!uploadedPreviewUrl">
+                  <div style="text-align:center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 0.75rem;display:block;color:var(--muted-foreground);"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>
+                    <p style="font-size:0.875rem;font-weight:500;margin-bottom:0.2rem;">Drop image here</p>
+                    <p style="font-size:0.75rem;color:var(--muted-foreground);">or click to browse</p>
+                  </div>
+                </template>
+                <template x-if="uploadedPreviewUrl">
+                  <div style="position:relative;display:inline-block;">
+                    <img :src="uploadedPreviewUrl" alt="Product preview" style="max-height:130px;max-width:100%;object-fit:contain;display:block;margin:0 auto;" />
+                    <button @click.stop="clearFile()" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;background:var(--foreground);color:var(--background);border:none;cursor:pointer;border-radius:50%;font-size:0.7rem;display:flex;align-items:center;justify-content:center;">✕</button>
+                  </div>
+                </template>
+                <input type="file" x-ref="fileInput" @change="onFileChange($event)" accept="image/*" style="display:none;" />
+              </div>
+            </div>
+
+            <div>
+              <label>Product name <span class="required">*</span></label>
+              <input type="text" x-model="productName" placeholder="e.g. Titon Watch" class="input" :disabled="chatStarted && chatLoading" />
+            </div>
+
+            <div>
+              <label>What does it do? <span class="required">*</span></label>
+              <textarea x-model="productBrief" rows="4"
+                placeholder="Who is it for? What makes it special? What feeling should the video create?"
+                class="textarea" :disabled="chatStarted && chatLoading"></textarea>
+            </div>
+
+            <!-- Re-analyze if chat already started -->
+            <template x-if="chatStarted">
+              <button type="button" @click="resetChat()" class="btn btn-outline btn-sm" style="align-self:flex-start;">
+                ↺ Start over
+              </button>
+            </template>
+          </div>
+
+          <!-- ─── RIGHT: AI chat panel ─── -->
+          <div style="display:flex;flex-direction:column;border:1px solid var(--border);background:var(--card);overflow:hidden;">
+
+            <!-- Chat header -->
+            <div style="padding:0.875rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
+              <div style="width:8px;height:8px;border-radius:50%;" :style="chatStarted ? 'background:var(--success);' : 'background:var(--border);'"></div>
+              <p style="font-size:0.8125rem;font-weight:500;">AI Creative Director</p>
+            </div>
+
+            <!-- Messages -->
+            <div id="chat-messages" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.875rem;min-height:0;">
+
+              <!-- Empty state -->
+              <template x-if="!chatStarted && !chatLoading">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1.5rem;">
+                  <div style="width:44px;height:44px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:0.875rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+                  </div>
+                  <p style="font-size:0.875rem;font-weight:500;margin-bottom:0.375rem;">Ready to analyze</p>
+                  <p style="font-size:0.8125rem;color:var(--muted-foreground);line-height:1.5;">Fill in the product details and click <strong>Analyze</strong> — the AI will suggest a story concept for your video.</p>
+                </div>
+              </template>
+
+              <!-- Loading spinner (first analysis) -->
+              <template x-if="!chatStarted && chatLoading">
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+                  <div style="text-align:center;">
+                    <div class="gen-spinner" style="margin:0 auto 0.75rem;"></div>
+                    <p style="font-size:0.8125rem;color:var(--muted-foreground);">Analyzing your product…</p>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Chat messages -->
+              <template x-for="(msg, idx) in chatMessages" :key="idx">
+                <div :style="msg.role === 'user' ? 'align-self:flex-end;' : 'align-self:flex-start;'" style="max-width:88%;">
+                  <div :style="msg.role === 'user'
+                    ? 'background:var(--foreground);color:var(--background);padding:0.625rem 0.875rem;font-size:0.8125rem;line-height:1.55;'
+                    : 'background:var(--surface);border:1px solid var(--border);padding:0.625rem 0.875rem;font-size:0.8125rem;line-height:1.6;'"
+                    x-text="msg.content">
+                  </div>
+                </div>
+              </template>
+
+              <!-- Typing indicator -->
+              <template x-if="chatStarted && chatLoading">
+                <div style="align-self:flex-start;">
+                  <div style="background:var(--surface);border:1px solid var(--border);padding:0.625rem 0.875rem;display:flex;gap:4px;align-items:center;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--muted-foreground);animation:typingDot 1.2s ease-in-out infinite;"></span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--muted-foreground);animation:typingDot 1.2s ease-in-out 0.2s infinite;"></span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--muted-foreground);animation:typingDot 1.2s ease-in-out 0.4s infinite;"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Chat input (only shown after chat started) -->
+            <template x-if="chatStarted">
+              <div style="border-top:1px solid var(--border);padding:0.625rem 0.75rem;display:flex;gap:0.5rem;">
+                <input
+                  type="text"
+                  x-model="chatInput"
+                  @keydown.enter.prevent="sendChatMessage()"
+                  placeholder="Suggest changes or ask for different mood…"
+                  class="input"
+                  style="flex:1;height:2.25rem;font-size:0.8125rem;"
+                  :disabled="chatLoading"
+                />
+                <button type="button" @click="sendChatMessage()" :disabled="chatLoading || !chatInput.trim()" class="btn btn-primary btn-sm" style="flex-shrink:0;">Send</button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Step 1 nav -->
+        <div class="create-nav-bar">
+          <div></div><!-- spacer -->
+          <button x-show="!chatStarted" type="button" class="btn btn-primary create-nav-next"
+            @click="startAnalysis()" :disabled="chatLoading">
+            <span x-show="!chatLoading">Analyze my product →</span>
+            <span x-show="chatLoading">Analyzing…</span>
+          </button>
+          <button x-show="chatStarted" type="button" class="btn btn-primary create-nav-next"
+            @click="step = 2">
+            Use this concept →
+          </button>
+        </div>
+      </div>
+
+      <!-- ══════════ STEP 2: Style & Generate ══════════ -->
+      <div x-show="step === 2 && !generating" style="display:flex;flex-direction:column;height:100%;">
+        <div class="create-step-header">
+          <p class="create-step-meta">Step 2 of 2</p>
+          <h1 class="create-step-title">Style & generate</h1>
+          <p class="create-step-desc">Set the vibe and output format, then generate your video.</p>
+        </div>
+
+        <div style="flex:1;overflow-y:auto;padding-right:0.5rem;min-height:0;">
+          <div style="display:flex;flex-direction:column;gap:2rem;max-width:540px;">
+
+            <!-- Vibe selector -->
+            <div>
+              <label style="margin-bottom:0.75rem;display:block;">Vibe</label>
+              <div class="vibe-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;">
+                <template x-for="vibe in vibes" :key="vibe.id">
+                  <div :class="['vibe-card', vibeId === vibe.id ? 'selected' : '']" @click="vibeId = vibe.id">
+                    <p style="font-size:0.9375rem;font-weight:500;margin-bottom:0.25rem;" x-text="vibe.name"></p>
+                    <p style="font-size:0.8rem;color:var(--muted-foreground);line-height:1.4;" x-text="vibe.description"></p>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div>
+                <label>Target audience <span class="hint">(optional)</span></label>
+                <input type="text" x-model="targetAudience" placeholder="e.g. Young professionals" class="input" />
+              </div>
+              <div>
+                <label>Call to action <span class="required">*</span></label>
+                <input type="text" x-model="ctaText" placeholder="e.g. Shop Now" class="input" />
+              </div>
+            </div>
+
+            <!-- Output settings -->
+            <div style="border-top:1px solid var(--border);padding-top:1.75rem;">
+              <p style="font-size:0.6875rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted-foreground);font-family:'JetBrains Mono',monospace;margin-bottom:1.25rem;">Output settings</p>
+              <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                <div>
+                  <label style="margin-bottom:0.5rem;">Resolution</label>
+                  <div style="display:flex;gap:0.5rem;">
+                    <template x-for="r in ['480p', '720p']" :key="r">
+                      <button type="button" @click="resolution = r" :class="['seg-btn', resolution === r ? 'active' : '']" style="flex:1;" x-text="r"></button>
+                    </template>
+                  </div>
+                </div>
+                <div>
+                  <label style="margin-bottom:0.5rem;">Duration</label>
+                  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                    <template x-for="opt in durationOptions" :key="opt.value">
+                      <button type="button" @click="duration = opt.value" :class="['seg-btn', duration === opt.value ? 'active' : '']" x-text="opt.label"></button>
+                    </template>
+                  </div>
+                </div>
+                <div>
+                  <label style="margin-bottom:0.5rem;">Aspect ratio</label>
+                  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                    <template x-for="ar in [{label:'16:9 Landscape',value:'16:9'},{label:'9:16 Portrait',value:'9:16'},{label:'1:1 Square',value:'1:1'}]" :key="ar.value">
+                      <button type="button" @click="aspectRatio = ar.value" :class="['seg-btn', aspectRatio === ar.value ? 'active' : '']" x-text="ar.label"></button>
+                    </template>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);padding:0.875rem 1rem;background:var(--surface);">
+                  <div>
+                    <p style="font-size:0.875rem;font-weight:500;">AI-generated audio</p>
+                    <p style="font-size:0.8rem;color:var(--muted-foreground);margin-top:0.125rem;">Seedance composes synchronized sound</p>
+                  </div>
+                  <button type="button" role="switch" :aria-checked="generateAudio ? 'true' : 'false'" @click="generateAudio = !generateAudio" class="toggle">
+                    <span class="toggle-thumb"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Step 2 nav -->
+        <div class="create-nav-bar">
+          <button type="button" class="btn btn-outline" @click="step = 1">← Back</button>
+          <button type="button" class="btn btn-primary create-nav-next" @click="onNext()">Generate video →</button>
+        </div>
+      </div>
+
+      <!-- ══════════ STEP 3: Result ══════════ -->
+      <div x-show="step === 3 && resultVideoUrl && !generating" style="display:flex;flex-direction:column;height:100%;">
+        <div class="create-step-header">
+          <p class="create-step-meta" style="color:var(--highlight);">Done!</p>
+          <h1 class="create-step-title">Your video is ready</h1>
+        </div>
+
+        <div style="max-width:520px;flex:1;overflow-y:auto;">
+          <video :src="resultVideoUrl" class="video-player" controls playsinline preload="metadata" style="margin-bottom:1.25rem;"></video>
+
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.75rem;">
+            <a :href="jobId ? `/api/download/${jobId}` : resultVideoUrl" :download="`${productName || 'video'}.mp4`" class="btn btn-primary btn-sm">Download MP4</a>
+            <button type="button" class="btn btn-outline btn-sm" @click="navigator.clipboard.writeText(window.location.href); window.toastSuccess('Link copied.')">Share link</button>
+            <button type="button" class="btn btn-outline btn-sm" @click="sessionId = null; runGeneration()">Regenerate</button>
+            <button type="button" class="btn btn-secondary btn-sm" @click="reset()">New video</button>
+            <a href="/dashboard" class="btn btn-ghost btn-sm">Library</a>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding-top:1.25rem;">
+            <p style="font-size:0.8125rem;font-weight:500;margin-bottom:0.75rem;color:var(--muted-foreground);">Try a different vibe</p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+              <template x-for="vibe in vibes" :key="vibe.id">
+                <button type="button"
+                  @click="vibeId = vibe.id; sessionId = null; runGeneration(vibe.id)"
+                  :style="vibe.id === vibeId ? 'border-color:var(--foreground);background:var(--surface);' : ''"
+                  style="border:1px solid var(--border);padding:0.375rem 0.75rem;font-size:0.75rem;cursor:pointer;background:transparent;transition:border-color 0.15s;"
+                  x-text="vibe.name"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /create-main -->
+  </div><!-- /create-layout -->
+</div>
+
+{% block scripts %}
+<style>
+/* Lock page scroll — only inner panels scroll */
+html, body { overflow: hidden !important; height: 100% !important; }
+.page-fade { height: calc(100vh - 4rem); overflow: hidden; }
+
+/* ── Two-column create layout ── */
+.create-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: calc(100vh - 4rem);
+  overflow: hidden;
+}
+
+.create-sidebar {
+  background: var(--foreground);
+  color: var(--background);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.create-back {
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.4);
+  text-decoration: none;
+  margin-bottom: 2.5rem;
+  display: inline-block;
+  transition: color 0.15s;
+}
+.create-back:hover { color: rgba(255,255,255,0.8); transform: none; }
+
+.create-sidebar-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
+.create-sidebar-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.5rem;
+  color: #fff;
+  font-weight: 400;
+  line-height: 1.15;
+  margin-top: 0.375rem;
+}
+
+.create-step-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+  transition: all 0.3s;
+  color: rgba(255,255,255,0.3);
+  background: transparent;
+}
+.create-step-active { background: var(--highlight); border-color: var(--highlight); color: #fff; }
+.create-step-done { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
+
+.create-step-line { width: 1px; height: 2rem; background: rgba(255,255,255,0.1); margin: 0.25rem 0; }
+.create-step-label-wrap { padding-top: 0.3rem; padding-bottom: 1.5rem; }
+.create-step-label { font-size: 0.875rem; color: rgba(255,255,255,0.25); transition: color 0.3s; }
+.create-step-label-active { color: #fff; font-weight: 500; }
+.create-step-label-done { color: rgba(255,255,255,0.45); }
+
+.create-tip-box { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.25rem; margin-top: auto; }
+.create-tip-text { font-size: 0.8rem; color: rgba(255,255,255,0.5); line-height: 1.65; margin-top: 0.375rem; }
+
+/* Main area — scrolls independently */
+.create-main {
+  background: var(--background);
+  display: flex;
+  flex-direction: column;
+  padding: 2.5rem 2.5rem 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Generation overlay */
+.create-gen-overlay {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
+.create-gen-ring { position: relative; width: 64px; height: 64px; margin: 0 auto 1.75rem; }
+.create-gen-ring-outer {
+  position: absolute; inset: 0;
+  border: 2px solid var(--border); border-top-color: var(--foreground);
+  border-radius: 50%; animation: spin 0.85s linear infinite;
+}
+.create-gen-ring-inner {
+  position: absolute; inset: 9px;
+  border: 1px solid transparent; border-top-color: var(--highlight);
+  border-radius: 50%; animation: spin 1.3s linear infinite reverse;
+}
+
+/* Step content */
+.create-step-header { margin-bottom: 1.5rem; flex-shrink: 0; }
+.create-step-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted-foreground); margin-bottom: 0.375rem;
+}
+.create-step-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.02em;
+  color: var(--foreground); margin-bottom: 0.25rem;
+}
+.create-step-desc { color: var(--muted-foreground); font-size: 0.9rem; }
+
+/* Nav bar */
+.create-nav-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 1.25rem 0 1.5rem;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  margin-top: 1rem;
+}
+.create-nav-next { min-width: 180px; }
+
+/* Typing indicator dots */
+@keyframes typingDot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .create-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
+  .create-sidebar {
+    flex-direction: row; flex-wrap: wrap; padding: 1rem 1.25rem;
+    gap: 1rem; align-items: center; height: auto;
+  }
+  .create-tip-box, .create-step-dot, .create-step-line, .create-step-label-wrap { display: none; }
+  .create-main { padding: 1.5rem 1.25rem 0; height: auto; overflow: visible; }
+  /* Step 1 two-panel becomes single column */
+  .step1-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 600px) {
+  .create-sidebar { display: none; }
+  .create-main { padding: 1.25rem 1rem 0; }
+  .step1-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+  /* Vibe card grid tighter on phones */
+  .vibe-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important; }
+  /* Output buttons wrap nicely */
+  .output-btns { flex-wrap: wrap !important; gap: 0.5rem !important; }
+}
+</style>
+{% endblock %}
+
+{% endblock %}

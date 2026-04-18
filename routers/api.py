@@ -285,7 +285,7 @@ async def generate_video(
     })
 
     submitted_prompt, submitted_prompt_language = PromptService.select_fal_prompt(preview.generated_prompt)
-    effective_end_user_id = effective_request.end_user_id or preview.preview_id
+    effective_end_user_id = effective_request.end_user_id
     image_url = str(effective_request.image_url) if effective_request.image_url else None
 
     logger.info(
@@ -395,21 +395,22 @@ async def get_job_status(
             )
         except HTTPException as exc:
             detail = str(exc.detail)
-            if "content_policy_violation" in detail:
-                error_msg = (
-                    "fal.ai flagged the generated audio for a content policy violation. "
-                    "Try regenerating with audio disabled."
-                )
-            else:
-                error_msg = detail
             logger.error("fal.ai get_result failed for job %s: %s", job_id, detail)
-            updated = job_store.update(job_id, status="FAILED", error=error_msg, completed_at=utc_now_iso())
+            updated = job_store.update(job_id, status="FAILED", error=detail, completed_at=utc_now_iso())
             return updated
 
         video_url = result.get("video", {}).get("url")
         if not video_url:
-            updated = job_store.update(job_id, status="FAILED", error="fal.ai completed without a video URL")
+            updated = job_store.update(
+                job_id,
+                status="FAILED",
+                error="fal.ai completed without a video URL",
+                completed_at=utc_now_iso(),
+            )
             return updated
+
+        audio_field = result.get("audio")
+        audio_url = audio_field.get("url") if isinstance(audio_field, dict) else None
 
         local_path = job.local_path
         if not local_path:
@@ -419,6 +420,7 @@ async def get_job_status(
             job_id,
             status="COMPLETED",
             video_url=video_url,
+            audio_url=audio_url,
             local_path=local_path,
             seed=result.get("seed"),
             completed_at=utc_now_iso(),
@@ -426,8 +428,13 @@ async def get_job_status(
         return updated
 
     if fal_status == "FAILED":
-        result = await fal_service.get_result(endpoint=job.fal_endpoint, request_id=job.fal_request_id)
-        error_message = result.get("error") or "fal.ai returned FAILED"
+        try:
+            result = await fal_service.get_result(endpoint=job.fal_endpoint, request_id=job.fal_request_id)
+            error_message = result.get("error") or "fal.ai returned FAILED"
+        except HTTPException as exc:
+            error_message = str(exc.detail)
+
+        logger.error("fal.ai job %s FAILED: %s", job_id, error_message)
         updated = job_store.update(job_id, status="FAILED", error=error_message, completed_at=utc_now_iso())
         return updated
 
@@ -437,6 +444,24 @@ async def get_job_status(
         "status": updated.status if updated else fal_status,
         "message": "Video is being generated on fal.ai...",
     }
+
+
+@router.get("/test-fal")
+async def test_fal(fal_service: FalService = Depends(get_fal_service)):
+    """Zero-cost check that the FAL_KEY authenticates against the Seedance 2.0 endpoint."""
+    if not fal_service.has_live_key():
+        return {"ok": False, "error": "FAL_KEY is not configured"}
+
+    endpoint = "bytedance/seedance-2.0/text-to-video/fast"
+    url = f"https://queue.fal.run/{endpoint}"
+    headers = {"Authorization": f"Key {fal_service.settings.fal_key}"}
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(url, headers=headers)
+        authed = resp.status_code != 401
+        return {"ok": authed, "status": resp.status_code, "endpoint": endpoint}
+    except httpx.HTTPError as exc:
+        return {"ok": False, "error": str(exc), "endpoint": endpoint}
 
 
 @router.get("/test-openai")

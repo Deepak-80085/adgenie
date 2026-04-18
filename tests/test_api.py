@@ -488,7 +488,7 @@ def test_status_content_policy_violation_marks_job_failed(app_client, mock_setti
         body = status_resp.json()
         assert body["status"] == "FAILED"
         assert "audio" in body["error"].lower()
-        assert "content policy" in body["error"].lower()
+        assert "content_policy" in body["error"].lower()
 
         # Second poll: job is now terminal — must return FAILED immediately, no more fal calls
         status_resp2 = app_client.get(f"/api/status/{job_id}")

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Profile — AdGenie{% endblock %}
+
+{% block content %}
+<div class="page-fade" x-data="profilePage()" x-init="init()">
+  <div style="max-width:48rem;margin:0 auto;padding:3rem 1.25rem;">
+
+    <div style="margin-bottom:2.5rem;">
+      <p data-meta>Account</p>
+      <h1 style="font-size:clamp(1.75rem,4vw,2.5rem);letter-spacing:-0.02em;margin-top:0.25rem;">Profile</h1>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" style="padding:3rem 0;">
+      <p data-meta>Loading…</p>
+    </div>
+
+    <!-- No auth -->
+    <div x-show="!loading && !user">
+      <p style="color:var(--muted-foreground);margin-bottom:1.5rem;">You are not signed in.</p>
+      <a href="/login" class="btn btn-primary btn-sm">Sign in</a>
+    </div>
+
+    <!-- Profile card -->
+    <div x-show="!loading && user" class="card">
+      <div class="card-content" style="display:flex;flex-direction:column;gap:1.5rem;">
+
+        <!-- Avatar + name -->
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <div style="width:3.5rem;height:3.5rem;border-radius:9999px;border:1px solid var(--border);background:var(--surface);display:grid;place-items:center;font-size:1rem;font-weight:600;" x-text="initials"></div>
+          <div>
+            <p style="font-weight:500;font-size:1rem;" x-text="displayName"></p>
+            <p style="font-size:0.8125rem;color:var(--muted-foreground);" x-text="user?.email"></p>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Fields -->
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div>
+            <label>Email</label>
+            <input type="email" :value="user?.email" class="input" readonly style="cursor:default;opacity:0.7;" />
+          </div>
+          <div>
+            <label>User ID</label>
+            <input type="text" :value="user?.id" class="input" readonly style="cursor:default;opacity:0.7;font-family:'JetBrains Mono',monospace;font-size:0.75rem;" />
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <div>
+          <button
+            class="btn btn-outline btn-sm"
+            @click="$store.auth.signOut()"
+          >Sign out</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>© 2026 AdGenie</footer>
+{% endblock %}

@@ -18,7 +18,26 @@
       "Bash(echo \"EXIT:$?\")",
       "Bash(git remote *)",
       "Bash(git branch *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git -C \"E:/sudo/seedance\" status)",
+      "Read(//e/sudo/**)",
+      "Bash(claude mcp *)",
+      "Bash(uvicorn main:app --reload --port 8000)",
+      "Bash(pkill -f \"uvicorn main:app\")",
+      "WebFetch(domain:oryzo.ai)",
+      "WebFetch(domain:tympanus.net)",
+      "WebFetch(domain:codepen.io)",
+      "WebFetch(domain:gsap.com)",
+      "WebFetch(domain:21st.dev)",
+      "WebFetch(domain:www.awwwards.com)",
+      "WebFetch(domain:lusion.co)",
+      "Bash(awk '{print $9, \"\\(\" $5 \"\\)\"}')",
+      "Bash(tasklist)",
+      "Bash(python3 -m py_compile routers/api.py routers/pages.py services/*.py config.py models.py)",
+      "Bash(grep -E '\\(package\\\\.json|vercel\\\\.json\\)$')",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

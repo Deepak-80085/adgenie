@@ -21,7 +21,7 @@ def test_prompt_preview_request_valid_text_to_video():
     assert req.resolution == "720p"
     assert req.aspect_ratio == "16:9"
     assert req.generate_audio is True
-    assert req.duration == "auto"
+    assert req.duration == "5"
 
 
 def test_prompt_preview_request_strips_whitespace_from_prompt():

@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
+from pathlib import Path
 from threading import RLock
 from typing import Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
-
-VALID_RESOLUTIONS = {"480p", "720p"}
-VALID_MODES = {"text-to-video", "image-to-video"}
-VALID_ASPECT_RATIOS = {"16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "auto"}
+logger = logging.getLogger(__name__)
+_JOBS_TMP = Path("/tmp/adgenie_jobs")
 
 
 def utc_now_iso() -> str:
@@ -37,7 +37,7 @@ class PromptPreviewRequest(BaseModel):
     image_url: HttpUrl | None = None
     uploaded_images: list[UploadedImage] = Field(default_factory=list)
     resolution: Literal["480p", "720p"] = "720p"
-    duration: str = "auto"
+    duration: str = "5"
     aspect_ratio: Literal["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "auto"] = "16:9"
     generate_audio: bool = True
     end_user_id: str | None = None
@@ -104,6 +104,7 @@ class JobRecord(BaseModel):
     submitted_prompt: str | None = None
     submitted_prompt_language: Literal["en", "zh"] | None = None
     video_url: str | None = None
+    audio_url: str | None = None
     local_path: str | None = None
     seed: int | None = None
     error: str | None = None
@@ -179,6 +180,25 @@ class JobStore:
     def __init__(self) -> None:
         self._items: dict[str, JobRecord] = {}
         self._lock = RLock()
+        try:
+            _JOBS_TMP.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+
+    def _persist(self, job: JobRecord) -> None:
+        try:
+            (_JOBS_TMP / f"{job.job_id}.json").write_text(job.model_dump_json())
+        except Exception as exc:
+            logger.debug("job persist failed: %s", exc)
+
+    def _load(self, job_id: str) -> JobRecord | None:
+        try:
+            p = _JOBS_TMP / f"{job_id}.json"
+            if p.exists():
+                return JobRecord.model_validate_json(p.read_text())
+        except Exception as exc:
+            logger.debug("job load failed: %s", exc)
+        return None
 
     def create(
         self,
@@ -222,11 +242,18 @@ class JobStore:
         )
         with self._lock:
             self._items[job.job_id] = job
+        self._persist(job)
         return job
 
     def get(self, job_id: str) -> JobRecord | None:
         with self._lock:
-            return self._items.get(job_id)
+            job = self._items.get(job_id)
+        if job is None:
+            job = self._load(job_id)
+            if job is not None:
+                with self._lock:
+                    self._items[job.job_id] = job
+        return job
 
     def update(self, job_id: str, **changes: object) -> JobRecord | None:
         with self._lock:
@@ -235,7 +262,8 @@ class JobStore:
                 return None
             updated = current.model_copy(update=changes)
             self._items[job_id] = updated
-            return updated
+        self._persist(updated)
+        return updated
 
     def list(self, limit: int = 20, offset: int = 0) -> JobsListResponse:
         with self._lock:
