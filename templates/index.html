@@ -34,7 +34,7 @@
         <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:130px;height:26px;background:#000;border-radius:0 0 1.5rem 1.5rem;z-index:10;"></div>
         <!-- Camera dot -->
         <div style="position:absolute;top:8px;right:30%;width:8px;height:8px;background:#1a1a1a;border-radius:50%;z-index:11;"></div>
-        <video src="/assests/shoe.mp4" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;" autoplay muted loop playsinline></video>
+        <video src="/assests/shoe.mp4" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;" autoplay muted loop playsinline loading="lazy" preload="none"></video>
       </div>
 
     </div>
@@ -60,7 +60,7 @@
   <section class="fullscreen-player" style="height:500vh;background:var(--surface);position:relative;border-top:1px solid var(--border);">
     <!-- Sticky video container -->
     <div class="video-player-sticky" style="position:sticky;top:0;height:100vh;width:100%;background:#000;display:flex;align-items:center;justify-content:center;">
-      <video id="fullscreen-video" src="/assests/food.mp4" style="max-width:100%;max-height:100%;object-fit:contain;" autoplay muted loop playsinline></video>
+      <video id="fullscreen-video" src="/assests/food.mp4" style="max-width:100%;max-height:100%;object-fit:contain;background:#000;" autoplay muted loop playsinline preload="metadata" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23000'/%3E%3C/svg%3E"></video>
 
       <!-- Product info -->
       <div class="player-label player-label-product" style="position:absolute;left:2rem;top:50%;transform:translateY(-50%);z-index:10;">
@@ -155,10 +155,19 @@
       { src: '/assests/fridge.mp4', product: 'Smart Appliance', category: 'Premium Kitchen' },
       { src: '/assests/nothing4.mp4', product: 'Tech Product', category: 'Next-Gen' },
       { src: '/assests/shoes.mp4', product: 'Fashion', category: 'Footwear Premium' },
-      { src: '/assests/tv.mp4', product: 'Home Theater', category: 'Entertainment Home' }
+      { src: '/assests/ice_cream.mp4', product: 'Ice Cream', category: 'Frozen Treats' }
     ];
 
     let currentVideoIndex = 0;
+
+    // Preload videos in the background to reduce loading lag on Vercel
+    videoData.forEach(video => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'video/mp4';
+      link.href = video.src;
+      document.head.appendChild(link);
+    });
 
     const updateVideo = (index) => {
       if (index === currentVideoIndex) return;
