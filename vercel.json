@@ -1,9 +1,14 @@
 {
-  "functions": {
-    "main.py": {
-      "maxDuration": 60
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "maxDuration": 60
+      }
     }
-  },
+  ],
   "routes": [
     {
       "src": "/(.*)",
